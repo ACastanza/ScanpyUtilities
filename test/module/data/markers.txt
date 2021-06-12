@@ -1,0 +1,6 @@
+>B cells
+expressed: CD19, MS4A1, CD79A, ACTB
+
+>T cells
+expressed: CD3D, CD3E, CD3G
+

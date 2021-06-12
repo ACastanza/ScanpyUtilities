@@ -1,25 +1,29 @@
 JVMLevel=
-LSID=urn\:lsid\:broad.mit.edu\:cancer.software.genepattern.module.analysis\:00378\:0.47
+LSID=urn\:lsid\:broad.mit.edu\:cancer.software.genepattern.module.analysis\:00382\:0.06.1
+
 author=Tom Sherman, Johns Hopkins University, wrapped as a module by Ted Liefeld, UCSD School of Medicine.
-categories=SingleCell
-commandLine=python run_scanpy_module.py --data.file=<data.file> --example.parameter=<example.parameter> <example.optional.file>
+categories=Single-Cell
+commandLine=bash /build/run_module.sh --python.executable=python --src.path=/build --data.file=<data.file> --output.basename=<output.basename> <genome> --annotate=<annotate> <cells.min.counts> <cells.max.counts> <cells.min.genes> <cells.max.genes> <genes.min.counts> <genes.max.counts> <genes.min.cells> <genes.max.cells> <cell.type.marker.file> <gene.annotation.database> --normalize=<normalize> <n.high.variance.genes> --compute.umap=<compute.umap> --compute.tsne=<compute.tsne>
 
 cpuType=any
 description=Scanpy preprocessing of an h5 single cell RNASeq dataset
-fileFormat=h5
+fileFormat=h5;;h5ad;loom;mtx
 language=any
 minGenePatternVersion=3.9.13
-name=ScanpyPreprocess
+
+name=ScanpyUtilities
+
 os=any
-job.docker.image=genepattern/scanpypreprocess\:latest
+job.docker.image=genepattern/scanpyutilities:0.9
 
 job.cpuCount=4
+job.memory=32 Gb
 
 p1_MODE=IN
 p1_TYPE=FILE
 p1_default_value=
-p1_description=A h5 file containing the single cell data
-p1_fileFormat=h5
+p1_description=A file containing single-cell data. h5ad, loom and mtx file formats are accepted. A 10x formatted hdf5 file may also be provided along with the 'genome' argument. The file will be internally converted to an h5ad file before proceeding.
+p1_fileFormat=h5ad;loom;mtx;h5
 p1_flag=
 p1_name=data.file
 p1_numValues=1..1
@@ -29,13 +33,14 @@ p1_prefix_when_specified=
 p1_type=java.io.File
 p1_value=
 
+
 p2_MODE=
 p2_TYPE=TEXT
-p2_default_value=10
-p2_description=Example Parameter
+p2_default_value=<data.file_basename>
+p2_description=Base filename for the output file
 p2_fileFormat=
 p2_flag=
-p2_name=example.parameter
+p2_name=output.basename
 p2_numValues=1..1
 p2_optional=
 p2_prefix=
@@ -43,19 +48,242 @@ p2_prefix_when_specified=
 p2_type=java.lang.String
 p2_value=
 
-p3_MODE=IN
-p3_TYPE=FILE
-p3_default_value=
-p3_description=An example optional file parameter
+
+p3_MODE=
+p3_TYPE=TEXT
+p3_default_value=0
+p3_description=Whether to perform annotation True/False. 
 p3_fileFormat=
 p3_flag=
-p3_name=example.optional.file
-p3_numValues=0..1
-p3_optional=on
+p3_name=annotate
+p3_numValues=1..1
+p3_optional=
 p3_prefix=
-p3_prefix_when_specified=--example.optional.file
-p3_type=java.io.File
-p3_value=
+p3_prefix_when_specified=
+p3_type=java.lang.String
+p3_value=0\=no;1\=yes
+
+
+p4_MODE=
+p4_TYPE=TEXT
+p4_default_value=
+p4_description=Filter out cells with fewer total counts than min counts
+p4_fileFormat=
+p4_flag=
+p4_name=cells.min.counts
+p4_numValues=0..1
+p4_optional=on
+p4_prefix=
+p4_prefix_when_specified=--cells.min.counts=
+p4_type=java.lang.String
+p4_value=
+
+
+p5_MODE=
+p5_TYPE=TEXT
+p5_default_value=
+p5_description=Filter out cells with more total counts than max counts
+p5_fileFormat=
+p5_flag=
+p5_name=cells.max.counts
+p5_numValues=0..1
+p5_optional=on
+p5_prefix=
+p5_prefix_when_specified=--cells.max.counts=
+p5_type=java.lang.String
+p5_value=
+
+
+p6_MODE=
+p6_TYPE=TEXT
+p6_default_value=
+p6_description=Filter out cells with fewer than min genes expressed
+p6_fileFormat=
+p6_flag=
+p6_name=cells.min.genes
+p6_numValues=0..1
+p6_optional=on
+p6_prefix=
+p6_prefix_when_specified=--cells.min.genes=
+p6_type=java.lang.String
+p6_value=
+
+
+p7_MODE=
+p7_TYPE=TEXT
+p7_default_value=
+p7_description=Filter out cells with more than max genes expressed
+p7_fileFormat=
+p7_flag=
+p7_name=cells.max.genes
+p7_numValues=0..1
+p7_optional=on
+p7_prefix=
+p7_prefix_when_specified=--cells.max.genes=
+p7_type=java.lang.String
+p7_value=
+
+
+p8_MODE=
+p8_TYPE=TEXT
+p8_default_value=
+p8_description=Filter out genes with fewer total counts than min counts
+p8_fileFormat=
+p8_flag=
+p8_name=genes.min.counts
+p8_numValues=0..1
+p8_optional=on
+p8_prefix=
+p8_prefix_when_specified=--genes.min.counts=
+p8_type=java.lang.String
+p8_value=
+
+
+p9_MODE=
+p9_TYPE=TEXT
+p9_default_value=
+p9_description=Filter out genes with more total counts than max counts
+p9_fileFormat=
+p9_flag=
+p9_name=genes.max.counts
+p9_numValues=0..1
+p9_optional=on
+p9_prefix=
+p9_prefix_when_specified=--genes.max.counts=
+p9_type=java.lang.String
+p9_value=
+
+
+p10_MODE=
+p10_TYPE=TEXT
+p10_default_value=
+p10_description=Filter out genes expressed in fewer than min cells
+p10_fileFormat=
+p10_flag=
+p10_name=genes.min.cells
+p10_numValues=0..1
+p10_optional=on
+p10_prefix=
+p10_prefix_when_specified=--genes.min.cells=
+p10_type=java.lang.String
+p10_value=
+
+
+p11_MODE=
+p11_TYPE=TEXT
+p11_default_value=
+p11_description=Filter out genes expressed in more than max cells
+p11_fileFormat=
+p11_flag=
+p11_name=genes.max.cells
+p11_numValues=0..1
+p11_optional=on
+p11_prefix=
+p11_prefix_when_specified=--genes.max.cells=
+p11_type=java.lang.String
+p11_value=
+
+p12_MODE=IN
+p12_TYPE=FILE
+p12_default_value=
+p12_description=A text file describing the marker genes for each cell type. This should be in the format accepted by the R package garnett as defined in https://cole-trapnell-lab.github.io/garnett/docs/.
+p12_fileFormat=txt
+p12_flag=
+p12_name=cell.type.marker.file
+p12_numValues=0..1
+p12_optional=on
+p12_prefix=
+p12_prefix_when_specified=--cell.type.marker.file=
+p12_type=java.io.File
+p12_value=
+
+p13_MODE=
+p13_TYPE=TEXT
+p13_default_value=0
+p13_description=Whether to perform normalization True/False. This step is performed after filtering if filtering is on
+p13_fileFormat=
+p13_flag=
+p13_name=normalize
+p13_numValues=1..1
+p13_optional=
+p13_prefix=
+p13_prefix_when_specified=
+p13_type=java.lang.String
+p13_value=0\=no;1\=yes
+
+p14_MODE=
+p14_TYPE=TEXT
+p14_default_value=
+p14_description=Subset to the top N highly variable genes
+p14_fileFormat=
+p14_flag=
+p14_name=n.high.variance.genes
+p14_numValues=0..1
+p14_optional=on
+p14_prefix=
+p14_prefix_when_specified=--n.high.variance.genes=
+p14_type=java.lang.String
+p14_value=
+
+
+p15_MODE=
+p15_TYPE=TEXT
+p15_default_value=0
+p15_description=Whether to compute UMAP True/False.
+p15_fileFormat=
+p15_flag=
+p15_name=compute.umap
+p15_numValues=1..1
+p15_optional=
+p15_prefix=
+p15_prefix_when_specified=
+p15_type=java.lang.String
+p15_value=0\=no;1\=yes
+
+
+p16_MODE=
+p16_TYPE=TEXT
+p16_default_value=0
+p16_description=Whether to compute TSNE True/False.
+p16_fileFormat=
+p16_flag=
+p16_name=compute.tsne
+p16_numValues=1..1
+p16_optional=
+p16_prefix=
+p16_prefix_when_specified=
+p16_type=java.lang.String
+p16_value=0\=no;1\=yes
+
+
+p17_MODE=
+p17_TYPE=TEXT
+p17_default_value=
+p17_description=When converting a 10x formated HDF5 file, the module will internally call read_10x_h5 from the scanpy package. This function expects a genome argument which specifies the name of the data set in the HDF5 file. e.g. 'GRCh38' 
+p17_fileFormat=
+p17_flag=
+p17_name=genome
+p17_numValues=0..1
+p17_optional=on
+p17_prefix=
+p17_prefix_when_specified=--genome=
+p17_type=java.lang.String
+p17_value=
+
+p18_MODE=
+p18_TYPE=TEXT
+p18_default_value=
+p18_description=This can be either "org.Hs.eg.db" (https://bioconductor.org/packages/release/data/annotation/html/org.Hs.eg.db.html) or "org.Mm.eg.db" (https://bioconductor.org/packages/release/data/annotation/html/org.Mm.eg.db.html). This annotation database is used to convert the gene names we've provided in the marker file to the gene ids we've used as the index in our data. If this is left blank, an exact match between the marker file and the gene indices is expected.
+p18_fileFormat=
+p18_flag=
+p18_name=gene.annotation.database
+p18_numValues=0..1
+p18_optional=on
+p18_prefix=
+p18_prefix_when_specified=--gene.annotation.database=
+p18_type=java.lang.String
+p18_value=
+
 
 privacy=public
 publicationDate=01/14/2019 11\:23 
@@ -63,6 +291,6 @@ quality=${quality.level}
 requiredPatchLSIDs=
 requiredPatchURLs=
 taskDoc=doc.html
-taskType=SingleCell
+taskType=Single-Cell
 userid=ted
 version=Working revision from Gevaert lab git repo on 10/16/18 

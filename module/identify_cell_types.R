@@ -1,0 +1,72 @@
+suppressMessages(library(Matrix))
+suppressMessages(library(rhdf5))
+suppressMessages(library(monocle))
+suppressMessages(library(garnett))
+
+# read commnad line arguments
+args <- commandArgs(trailingOnly=TRUE)
+adata_file <- args[1]
+marker_file <- args[2]
+gene_anno_db <- args[3]
+
+if (!is.na(gene_anno_db))
+{
+    print(paste("gene annotation database:", gene_anno_db))
+    if (!(gene_anno_db %in% c("org.Hs.eg.db", "org.Mm.eg.db")))
+        stop("unrecognized gene annotation database")
+    suppressMessages(library(gene_anno_db, character.only=TRUE))
+}
+
+# read count data from file
+raw_data <- as.numeric(h5read(adata_file, "/X/data"))
+indices <- as.integer(h5read(adata_file, "/X/indices"))
+indptr <- as.integer(h5read(adata_file, "/X/indptr"))
+counts <- sparseMatrix(i=indices+1, p=indptr, x=raw_data)
+
+# read sample info from file
+obs <- h5read(adata_file, "/obs")
+rownames(obs) <- obs[,1]
+obs <- obs[,-1]
+pd <- AnnotatedDataFrame(data=obs)
+
+# read gene info from file
+var <- h5read(adata_file, "/var")
+rownames(var) <- var[,1]
+var <- var[,-1]
+fd <- new("AnnotatedDataFrame", data=var)
+
+# create cds
+cds <- newCellDataSet(counts, phenoData=pd, featureData=fd,
+    expressionFamily=negbinomial.size())
+cds <- estimateSizeFactors(cds)
+
+# evaluate quality of marker file and return results in an image
+if (is.na(gene_anno_db)) {
+    marker_check <- check_markers(cds, marker_file, db="none")
+} else {
+    marker_check <- check_markers(cds, marker_file, db=get(gene_anno_db),
+        cds_gene_id_type="ENSEMBL", marker_file_gene_id_type="SYMBOL")
+}
+png("ica_marker_check.png")
+plot_markers(marker_check)
+dev.off()
+
+# train classifier and apply to data set
+if (is.na(gene_anno_db)) {
+    classifier <- train_cell_classifier(cds=cds, marker_file=marker_file, db="none")
+    cds <- classify_cells(cds, classifier, cluster_extend=TRUE, db="none")
+} else {
+    classifier <- train_cell_classifier(cds=cds, marker_file=marker_file,
+        db=get(gene_anno_db), cds_gene_id_type="ENSEMBL",
+        marker_file_gene_id_type="SYMBOL")
+    cds <- classify_cells(cds, classifier, db=get(gene_anno_db),
+        cluster_extend=TRUE, cds_gene_id_type="ENSEMBL")
+}
+print(table(pData(cds)$cell_type))
+
+# write cell types back to adata file
+obs$cell_type <- as.character(pData(cds)$cell_type)
+obs$extended_cell_type <- as.character(pData(cds)$cluster_ext_type)
+obs$index <- rownames(obs)
+h5delete(adata_file, "/obs")
+h5write(obs, adata_file, "/obs")
